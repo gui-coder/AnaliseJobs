@@ -1,52 +1,46 @@
-import { EventEmitter } from "./core/event-emitter.js";
-import { Sidebar } from "./components/sidebar/sidebar.js";
-import { Dashboard } from "./components/dashboard/dashboard.js";
-import { Overdue } from "./components/overdue/overdue.js";
-import { History } from "./components/history/history.js";
-import { EasyCRQ } from "./components/easy-crq/easy-crq.js";
-import { ROUTES, EVENTS } from "./utils/constants.js";
+import { Sidebar } from "./components/Sidebar/Sidebar.js";
+import { Dashboard } from "./components/Dashboard/Dashboard.js";
+import { Overdue } from "./components/Overdue/Overdue.js";
+import { History } from "./components/History/History.js";
+import { ROUTES } from "./utils/constants.js";
 
 class App {
   constructor() {
-    this.eventEmitter = new EventEmitter();
     this.components = {};
-    this.currentRoute = ROUTES.DASHBOARD;
+    this.currentRoute = null;
     this.init();
   }
 
   init() {
-    this.initComponents();
+    this.initializeComponents();
+    this.setupRouter();
     this.bindEvents();
+  }
+
+  initializeComponents() {
+    // Inicializa a sidebar
+    this.components.sidebar = new Sidebar((route) => this.navigateTo(route));
+
+    // Inicializa os componentes de conteúdo
+    this.components.dashboard = new Dashboard();
+    this.components.overdue = new Overdue();
+    this.components.history = new History();
+
+    // Monta a estrutura inicial
+    const appContainer = document.getElementById("app");
+    appContainer.appendChild(this.components.sidebar.element);
+
+    // Cria o container principal
+    const mainContent = document.createElement("main");
+    mainContent.id = "mainContent";
+    mainContent.className = "main-content";
+    appContainer.appendChild(mainContent);
+  }
+
+  setupRouter() {
+    // Lida com a navegação inicial
+    window.addEventListener("hashchange", () => this.handleRoute());
     this.handleRoute();
-  }
-
-  initComponents() {
-    // Inicializa componentes
-    this.components = {
-      sidebar: new Sidebar(this.eventEmitter),
-      dashboard: new Dashboard(this.eventEmitter),
-      overdue: new Overdue(this.eventEmitter),
-      history: new History(this.eventEmitter),
-      easyCrq: new EasyCRQ(this.eventEmitter),
-    };
-
-    // Monta a sidebar
-    this.components.sidebar.mount(document.getElementById("app"));
-
-    // Cria container para o conteúdo principal
-    const mainContainer = document.createElement("main");
-    mainContainer.id = "main-content";
-    document.getElementById("app").appendChild(mainContainer);
-  }
-
-  bindEvents() {
-    // Navegação
-    this.eventEmitter.on(EVENTS.NAVIGATION, (route) => {
-      this.navigateTo(route);
-    });
-
-    // Monitora mudanças na URL
-    window.addEventListener("popstate", () => this.handleRoute());
   }
 
   handleRoute() {
@@ -55,18 +49,24 @@ class App {
   }
 
   navigateTo(route) {
-    // Remove componente atual
-    const mainContainer = document.getElementById("main-content");
-    mainContainer.innerHTML = "";
+    // Remove conteúdo atual
+    const mainContent = document.getElementById("mainContent");
+    mainContent.innerHTML = "";
+
+    // Atualiza rota atual
+    this.currentRoute = route;
+
+    // Atualiza sidebar
+    this.components.sidebar.setActive(route);
 
     // Monta novo componente
     const component = this.getComponentForRoute(route);
-    if (component) {
-      component.mount(mainContainer);
-      this.components.sidebar.setActive(route);
-      this.currentRoute = route;
-      window.location.hash = route;
+    if (component?.element) {
+      mainContent.appendChild(component.element);
     }
+
+    // Atualiza URL
+    window.location.hash = route;
   }
 
   getComponentForRoute(route) {
@@ -74,9 +74,22 @@ class App {
       [ROUTES.DASHBOARD]: this.components.dashboard,
       [ROUTES.OVERDUE]: this.components.overdue,
       [ROUTES.HISTORY]: this.components.history,
-      [ROUTES.EASY_CRQ]: this.components.easyCrq,
     };
     return componentMap[route];
+  }
+
+  bindEvents() {
+    // Toggle sidebar no mobile
+    const sidebarToggle = document.createElement("button");
+    sidebarToggle.id = "sidebarToggle";
+    sidebarToggle.className = "btn btn-light d-md-none";
+    sidebarToggle.innerHTML = '<i class="fas fa-bars"></i>';
+
+    sidebarToggle.addEventListener("click", () => {
+      this.components.sidebar.toggleSidebar(true);
+    });
+
+    document.body.appendChild(sidebarToggle);
   }
 }
 

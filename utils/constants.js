@@ -1,14 +1,7 @@
-export const EVENTS = {
-  NAVIGATION: "navigation",
-  THEME_CHANGE: "theme_change",
-  FILE_UPLOAD: "file_upload",
-};
-
 export const ROUTES = {
   DASHBOARD: "dashboard",
   OVERDUE: "overdue",
   HISTORY: "history",
-  EASY_CRQ: "easy-crq",
 };
 
 export const MENU_ITEMS = [
@@ -27,9 +20,12 @@ export const MENU_ITEMS = [
     label: "Histórico",
     icon: "fas fa-history",
   },
-  {
-    id: ROUTES.EASY_CRQ,
-    label: "Easy CRQ",
-    icon: "fas fa-wrench",
-  },
 ];
+
+export const FILE_TYPES = {
+  EXCEL: ".xlsx,.xls",
+  ACCEPTED_MIME_TYPES: [
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.ms-excel",
+  ],
+};

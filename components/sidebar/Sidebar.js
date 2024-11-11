@@ -1,36 +1,42 @@
-import { BaseComponent } from "../../core/base-component.js";
-import { MENU_ITEMS, EVENTS } from "../../utils/constants.js";
-import "./sidebar.css";
+import { MENU_ITEMS } from "../../utils/constants.js";
 
-export class Sidebar extends BaseComponent {
-  constructor(eventEmitter) {
-    super();
-    this.eventEmitter = eventEmitter;
+export class Sidebar {
+  constructor(onNavigate) {
+    this.element = null;
+    this.onNavigate = onNavigate;
     this.activeRoute = null;
-    this.render();
+    this.init();
+  }
+
+  init() {
+    this.element = this.createSidebar();
     this.bindEvents();
   }
 
-  render() {
-    this.element = this.createElement("div", "sidebar");
-    this.element.innerHTML = `
+  createSidebar() {
+    const sidebar = document.createElement("div");
+    sidebar.className = "sidebar";
+    sidebar.innerHTML = this.getTemplate();
+    return sidebar;
+  }
+
+  getTemplate() {
+    return `
             <div class="sidebar-header">
                 <h5>Menu</h5>
-                <button class="sidebar-close">×</button>
+                <button class="btn-close" id="closeSidebar"></button>
             </div>
             <nav class="sidebar-nav">
-                ${this.renderMenuItems()}
+                ${this.getMenuItemsTemplate()}
             </nav>
         `;
   }
 
-  renderMenuItems() {
+  getMenuItemsTemplate() {
     return MENU_ITEMS.map(
       (item) => `
             <a href="#${item.id}" 
-               class="sidebar-item ${
-                 this.activeRoute === item.id ? "active" : ""
-               }"
+               class="nav-link ${this.activeRoute === item.id ? "active" : ""}"
                data-route="${item.id}">
                 <i class="${item.icon}"></i>
                 <span>${item.label}</span>
@@ -41,18 +47,27 @@ export class Sidebar extends BaseComponent {
 
   bindEvents() {
     this.element.addEventListener("click", (e) => {
-      const item = e.target.closest(".sidebar-item");
-      if (item) {
+      const link = e.target.closest(".nav-link");
+      if (link) {
         e.preventDefault();
-        const route = item.dataset.route;
+        const route = link.dataset.route;
         this.setActive(route);
-        this.eventEmitter.emit(EVENTS.NAVIGATION, route);
+        this.onNavigate(route);
       }
     });
+
+    const closeBtn = this.element.querySelector("#closeSidebar");
+    closeBtn?.addEventListener("click", () => this.toggleSidebar(false));
   }
 
   setActive(route) {
     this.activeRoute = route;
-    this.render();
+    this.element.querySelectorAll(".nav-link").forEach((link) => {
+      link.classList.toggle("active", link.dataset.route === route);
+    });
+  }
+
+  toggleSidebar(show) {
+    this.element.classList.toggle("show", show);
   }
 }
