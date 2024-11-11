@@ -1,27 +1,174 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Análise Jobs</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="src/styles/main.css">
+    <title>Análise de Dados</title>
+
+    <!-- Fontes -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Estilos -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Scripts externos -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 
 <body>
-    <div id="app" class="app-container"></div>
+    <div class="container"> <!-- Adiciona a div com classe container -->
+        <div class="app-container">
+            <!-- Barra lateral -->
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <i class="fas fa-chart-line"></i>
+                    <h1>Analytics</h1>
+                </div>
+                <nav class="sidebar-nav">
+                    <ul>
+                        <li class="active">
+                            <a href="#dashboard">
+                                <i class="fas fa-home"></i>
+                                Dashboard
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#historic">
+                                <i class="fas fa-history"></i>
+                                Histórico
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </aside>
 
-    <!-- Bootstrap Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- XLSX Library -->
-    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
-    <!-- App -->
-    <script type="module" src="src/app.js"></script>
+            <!-- Conteúdo principal -->
+            <main class="main-content">
+                <div class="content-wrapper">
+                    <!-- Cabeçalho -->
+                    <header class="main-header">
+                        <div class="header-title">
+                            <h2>Dashboard</h2>
+                            <p class="subtitle">Análise de Dados</p>
+                        </div>
+
+                        <!-- Ações -->
+                        <div class="header-actions">
+                            <!-- Upload de arquivo -->
+                            <div class="file-control">
+                                <label for="fileInput" class="button primary-button">
+                                    <i class="fas fa-upload"></i>
+                                    Importar
+                                </label>
+                                <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" hidden>
+                            </div>
+
+                            <!-- Botão de processamento -->
+                            <button id="processButton" class="button secondary-button" disabled>
+                                <i class="fas fa-cogs"></i>
+                                Processar
+                            </button>
+
+                            <!-- Botão de exportação -->
+                            <div class="export-control">
+                                <button id="exportChartsButton" class="button export-button" disabled>
+                                    <i class="fas fa-download"></i>
+                                    Exportar
+                                </button>
+                                <div class="export-options hidden">
+                                    <button data-format="xlsx" class="export-option">
+                                        <i class="fas fa-file-excel"></i>
+                                        Excel
+                                    </button>
+                                    <button data-format="pdf" class="export-option">
+                                        <i class="fas fa-file-pdf"></i>
+                                        PDF
+                                    </button>
+                                    <button data-format="png" class="export-option">
+                                        <i class="fas fa-file-image"></i>
+                                        PNG
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </header>
+
+                    <!-- Área de feedback -->
+                    <section class="feedback-section">
+                        <!-- Loading -->
+                        <div id="loadingIndicator" class="loading-indicator hidden">
+                            <div class="spinner"></div>
+                            <p>Processando dados...</p>
+                        </div>
+
+                        <!-- Erro -->
+                        <div id="errorContainer" class="error-container hidden"></div>
+
+                        <!-- Info do arquivo -->
+                        <div id="fileInfo" class="file-info hidden"></div>
+
+                        <!-- Estatísticas -->
+                        <div id="statsContainer" class="stats-container hidden"></div>
+                    </section>
+
+                    <!-- Gráficos -->
+                    <section class="charts-section">
+                        <div class="charts-grid">
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <h3>Frequência de Jobs</h3>
+                                </div>
+                                <div class="chart-body">
+                                    <canvas id="jobFrequencyChart"></canvas>
+                                </div>
+                            </div>
+
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <h3>Frequência de Agentes</h3>
+                                </div>
+                                <div class="chart-body">
+                                    <canvas id="agentFrequencyChart"></canvas>
+                                </div>
+                            </div>
+
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <h3>Duração Média</h3>
+                                </div>
+                                <div class="chart-body">
+                                    <canvas id="durationLineChart"></canvas>
+                                </div>
+                            </div>
+
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <h3>Comparação</h3>
+                                </div>
+                                <div class="chart-body">
+                                    <canvas id="comparisonStackedBarChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </main>
+
+            <!-- Container de notificações -->
+            <div id="notificationContainer" class="notification-container"></div>
+        </div>
+
+        <!-- Script principal -->
+        <script src="scripts/main.js" type="module"></script>
 </body>
 
 </html>
